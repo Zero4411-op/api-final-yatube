@@ -5,9 +5,9 @@ User = get_user_model()
 
 
 class Group(models.Model):
-    title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
-    description = models.TextField()
+    title = models.CharField('Название', max_length=200)
+    slug = models.SlugField('Слаг', unique=True)
+    description = models.TextField('Описание')
 
     class Meta:
         ordering = ('title',)
@@ -19,27 +19,30 @@ class Group(models.Model):
 
 
 class Post(models.Model):
-    text = models.TextField()
+    text = models.TextField('Текст')
     pub_date = models.DateTimeField(
         'Дата публикации',
-        auto_now_add=True
+        auto_now_add=True,
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='posts'
+        related_name='posts',
+        verbose_name='Автор',
     )
     group = models.ForeignKey(
         Group,
         on_delete=models.SET_NULL,
         related_name='posts',
         null=True,
-        blank=True
+        blank=True,
+        verbose_name='Группа',
     )
     image = models.ImageField(
+        'Изображение',
         upload_to='posts/',
         null=True,
-        blank=True
+        blank=True,
     )
 
     class Meta:
@@ -55,18 +58,20 @@ class Comment(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Автор',
     )
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Пост',
     )
-    text = models.TextField()
+    text = models.TextField('Текст')
     created = models.DateTimeField(
         'Дата добавления',
         auto_now_add=True,
-        db_index=True
+        db_index=True,
     )
 
     class Meta:
@@ -82,20 +87,26 @@ class Follow(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='follower'
+        related_name='follows',
+        verbose_name='Подписчик',
     )
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='following'
+        related_name='followers',
+        verbose_name='Автор',
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'following'),
-                name='unique_follow'
-            )
+                name='unique_follow',
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(user=models.F('following')),
+                name='prevent_self_follow',
+            ),
         ]
         ordering = ('user',)
         verbose_name = 'Подписка'

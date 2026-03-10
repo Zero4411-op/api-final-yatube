@@ -5,36 +5,24 @@ from .views import (
     CommentViewSet,
     FollowViewSet,
     GroupViewSet,
-    PostViewSet
+    PostViewSet,
 )
 
-router = DefaultRouter()
-router.register('posts', PostViewSet, basename='posts')
-router.register('groups', GroupViewSet, basename='groups')
-router.register('follow', FollowViewSet, basename='follow')
+v1_router = DefaultRouter()
+v1_router.register('posts', PostViewSet, basename='posts')
+v1_router.register('groups', GroupViewSet, basename='groups')
+v1_router.register(
+    r'posts/(?P<post_id>\d+)/comments',
+    CommentViewSet,
+    basename='comments',
+)
+v1_router.register('follow', FollowViewSet, basename='follow')
 
-comments_list = CommentViewSet.as_view({
-    'get': 'list',
-    'post': 'create',
-})
-
-comments_detail = CommentViewSet.as_view({
-    'get': 'retrieve',
-    'put': 'update',
-    'patch': 'partial_update',
-    'delete': 'destroy',
-})
+v1_patterns = [
+    path('', include(v1_router.urls)),
+    path('', include('djoser.urls.jwt')),
+]
 
 urlpatterns = [
-    path('v1/', include(router.urls)),
-    path(
-        'v1/posts/<int:post_id>/comments/',
-        comments_list,
-        name='comments-list'
-    ),
-    path(
-        'v1/posts/<int:post_id>/comments/<int:pk>/',
-        comments_detail,
-        name='comments-detail'
-    ),
+    path('v1/', include(v1_patterns)),
 ]
